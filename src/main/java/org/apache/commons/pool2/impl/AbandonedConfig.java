@@ -56,7 +56,7 @@ public class AbandonedConfig {
      * Whether or not pool maintenance (evictor) performs abandoned object
      * removal.
      */
-    private boolean removeAbandonedOnMaintenance;
+    private boolean removeAbandonedOnMaintenance; // 在维护任务运行的时候会进行泄漏对象的清理
 
     /**
      * Timeout before an abandoned object can be removed.

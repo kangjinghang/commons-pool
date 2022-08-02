@@ -65,7 +65,7 @@ import java.util.concurrent.locks.Condition;
  *
  * @since 2.0
  */
-class LinkedBlockingDeque<E> extends AbstractQueue<E>
+class LinkedBlockingDeque<E> extends AbstractQueue<E> // 双端队列来存储对象，队列支持FIFO和FILO两种策略，基于AQS来实现队列的操作的协同。
         implements Deque<E>, Serializable {
 
     /*
@@ -285,29 +285,29 @@ class LinkedBlockingDeque<E> extends AbstractQueue<E>
      * Invariant: (first == null && last == null) ||
      *            (first.prev == null && first.item != null)
      */
-    private transient Node<E> first; // @GuardedBy("lock")
+    private transient Node<E> first; // @GuardedBy("lock") // 第一个节点
 
     /**
      * Pointer to last node.
      * Invariant: (first == null && last == null) ||
      *            (last.next == null && last.item != null)
      */
-    private transient Node<E> last; // @GuardedBy("lock")
+    private transient Node<E> last; // @GuardedBy("lock") // 最后一个节点
 
     /** Number of items in the deque */
-    private transient int count; // @GuardedBy("lock")
+    private transient int count; // @GuardedBy("lock") // 当前队列长度
 
     /** Maximum number of items in the deque */
-    private final int capacity;
+    private final int capacity; // 队列最大容量
 
     /** Main lock guarding all access */
-    private final InterruptibleReentrantLock lock;
+    private final InterruptibleReentrantLock lock; // 主锁
 
     /** Condition for waiting takes */
-    private final Condition notEmpty;
+    private final Condition notEmpty; // 队列是否为空状态锁
 
     /** Condition for waiting puts */
-    private final Condition notFull;
+    private final Condition notFull; // 队列是否满状态锁
 
     /**
      * Creates a {@code LinkedBlockingDeque} with a capacity of
@@ -757,7 +757,7 @@ class LinkedBlockingDeque<E> extends AbstractQueue<E>
                 if (nanos <= 0) {
                     return false;
                 }
-                nanos = notFull.awaitNanos(nanos);
+                nanos = notFull.awaitNanos(nanos); // 如果操作不成功，则基于notFull状态对象进行等待
             }
             return true;
         } finally {
@@ -1322,7 +1322,7 @@ class LinkedBlockingDeque<E> extends AbstractQueue<E>
         try {
             E x;
             while ( (x = unlinkFirst()) == null) {
-                notEmpty.await();
+                notEmpty.await(); // 如果操作不成功，则对notEmpty进行等待操作
             }
             return x;
         } finally {

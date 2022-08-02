@@ -30,7 +30,7 @@ package org.apache.commons.pool2;
  * @see BaseKeyedPooledObjectFactory
  *
  * @since 2.0
- */
+ */ // 默认的抽象实现BasePooledObjectFactory ，业务方在使用的时候只需要继承该类，然后实现warp和create方法即可
 public abstract class BasePooledObjectFactory<T, E extends Exception> extends BaseObject implements PooledObjectFactory<T, E> {
 
     /**
@@ -77,7 +77,7 @@ public abstract class BasePooledObjectFactory<T, E extends Exception> extends Ba
      * @param p ignored
      */
     @Override
-    public void passivateObject(final PooledObject<T> p)
+    public void passivateObject(final PooledObject<T> p) // 进行反初始化操作
         throws E {
         // The default implementation is a no-op.
     }

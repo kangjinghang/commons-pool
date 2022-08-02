@@ -71,7 +71,7 @@ package org.apache.commons.pool2;
  *
  * @since 2.0
  */
-public interface PooledObjectFactory<T, E extends Exception> {
+public interface PooledObjectFactory<T, E extends Exception> { // 对象工厂类，负责具体对象的创建、初始化，对象状态的销毁和验证
 
   /**
    * Reinitializes an instance to be returned by the pool.
@@ -149,7 +149,7 @@ public interface PooledObjectFactory<T, E extends Exception> {
    *
    * @see #destroyObject
    */
-  void passivateObject(PooledObject<T> p) throws E;
+  void passivateObject(PooledObject<T> p) throws E; // 进行反初始化操作
 
   /**
    * Ensures that the instance is safe to be returned by the pool.

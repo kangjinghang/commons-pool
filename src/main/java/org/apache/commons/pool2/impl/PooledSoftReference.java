@@ -28,7 +28,7 @@ import java.lang.ref.SoftReference;
  *
  * @since 2.0
  */
-public class PooledSoftReference<T> extends DefaultPooledObject<T> {
+public class PooledSoftReference<T> extends DefaultPooledObject<T> { // 与DefaultPooledObject不同点是使用SoftReference实现了对象的软引用。获取对象的时候使用也是通过SoftReference进行获取。
 
     /** SoftReference wrapped by this object */
     private volatile SoftReference<T> reference;

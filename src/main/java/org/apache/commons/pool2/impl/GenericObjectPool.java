@@ -92,7 +92,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
     private volatile int maxIdle = GenericObjectPoolConfig.DEFAULT_MAX_IDLE;
 
     private volatile int minIdle = GenericObjectPoolConfig.DEFAULT_MIN_IDLE;
-
+    // 通过工厂模式，实现了对象池与对象的生成与实现过程细节的解耦
     private final PooledObjectFactory<T, E> factory;
 
     /*
@@ -117,7 +117,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
     private long makeObjectCount;
 
     private final Object makeObjectCountLock = new Object();
-
+    // 双端队列来存储对象
     private final LinkedBlockingDeque<PooledObject<T>> idleObjects;
 
     /**
@@ -205,12 +205,12 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
      * (no exception, no impact to the pool). </p>
      */
     @Override
-    public void addObject() throws E {
+    public void addObject() throws E { // 向对象池中增加对象，一般在预加载的时候会使用该功能
         assertOpen();
         if (factory == null) {
             throw new IllegalStateException("Cannot add objects without a factory.");
         }
-        addIdleObject(create());
+        addIdleObject(create()); // 依赖于对象构造工厂PooledObjectFactory，在生成对象的时候，基于对象池中定义的参数和对象构造工厂来生成
     }
 
     /**
@@ -273,9 +273,9 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
      */
     public T borrowObject(final Duration borrowMaxWaitDuration) throws E {
         assertOpen();
-
+        // 如果当前对象池中少于2个idle状态的对象或者 active数量>最大对象数-3 的时候，在borrow对象的时候启动泄漏清理
         final AbandonedConfig ac = this.abandonedConfig;
-        if (ac != null && ac.getRemoveAbandonedOnBorrow() && getNumIdle() < 2 &&
+        if (ac != null && ac.getRemoveAbandonedOnBorrow() && getNumIdle() < 2 && // 根据配置确定是否要为标签删除调用removeAbandoned方法
                 getNumActive() > getMaxTotal() - 3) {
             removeAbandoned(ac);
         }
@@ -288,19 +288,19 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
 
         boolean create;
         final long waitTimeMillis = System.currentTimeMillis();
-
+        // 尝试获取或创建一个对象
         while (p == null) {
             create = false;
-            p = idleObjects.pollFirst();
+            p = idleObjects.pollFirst(); // 1、尝试从双端队列中获取对象，pollFirst方法是非阻塞方法
             if (p == null) {
-                p = create();
+                p = create(); // 创建一个对象
                 if (p != null) {
                     create = true;
                 }
             }
             if (blockWhenExhausted) {
                 if (p == null) {
-                    try {
+                    try { // 2、没有设置最大阻塞等待时间，则无限等待；设置最大等待时间了，则阻塞等待指定的时间
                         p = borrowMaxWaitDuration.isNegative() ? idleObjects.takeFirst() : idleObjects.pollFirst(borrowMaxWaitDuration);
                     } catch (final InterruptedException e) {
                         // Don't surface exception type of internal locking mechanism.
@@ -314,16 +314,16 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
             } else if (p == null) {
                 throw new NoSuchElementException(appendStats("Pool exhausted"));
             }
-            if (!p.allocate()) {
+            if (!p.allocate()) { // 调用allocate()使状态更改为ALLOCATED状态
                 p = null;
             }
 
             if (p != null) {
                 try {
-                    factory.activateObject(p);
+                    factory.activateObject(p); // 调用工厂的activateObject来初始化对象
                 } catch (final Exception e) {
                     try {
-                        destroy(p, DestroyMode.NORMAL);
+                        destroy(p, DestroyMode.NORMAL); // 如果发生错误，请调用destroy方法来销毁对象
                     } catch (final Exception ignored) {
                         // ignored - activation failure is more important
                     }
@@ -335,16 +335,16 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
                         throw nsee;
                     }
                 }
-                if (p != null && getTestOnBorrow()) {
+                if (p != null && getTestOnBorrow()) { // 进行基于TestOnBorrow配置的对象可用性分析
                     boolean validate = false;
                     Throwable validationThrowable = null;
                     try {
-                        validate = factory.validateObject(p);
+                        validate = factory.validateObject(p); // 验证对象的可用性状态
                     } catch (final Throwable t) {
                         PoolUtils.checkRethrow(t);
                         validationThrowable = t;
                     }
-                    if (!validate) {
+                    if (!validate) { // 对象不可用，验证失败，则进行destroy
                         try {
                             destroy(p, DestroyMode.NORMAL);
                             destroyedByBorrowValidationCount.incrementAndGet();
@@ -498,7 +498,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
      * @return The new wrapped pooled object
      * @throws E if the object factory's {@code makeObject} fails
      */
-    private PooledObject<T> create() throws E {
+    private PooledObject<T> create() throws E { // 基于对象工厂来生成的对象
         int localMaxTotal = getMaxTotal();
         // This simplifies the code later in this method
         if (localMaxTotal < 0) {
@@ -559,7 +559,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
 
         final PooledObject<T> p;
         try {
-            p = factory.makeObject();
+            p = factory.makeObject(); // 基于对象工厂来生成对应的对象
             if (getTestOnCreate() && !factory.validateObject(p)) {
                 createCount.decrementAndGet();
                 return null;
@@ -619,13 +619,13 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
      * @param always true means create instances even if the pool has no threads waiting
      * @throws E if the factory's makeObject throws
      */
-    private void ensureIdle(final int idleCount, final boolean always) throws E {
+    private void ensureIdle(final int idleCount, final boolean always) throws E { // 确保调用idle以确保池中有IDLE状态对象可用，如果没有，则调用create方法创建一个新对象
         if (idleCount < 1 || isClosed() || !always && !idleObjects.hasTakeWaiters()) {
             return;
         }
 
         while (idleObjects.size() < idleCount) {
-            final PooledObject<T> p = create();
+            final PooledObject<T> p = create(); // 调用create方法创建一个新对象
             if (p == null) {
                 // Can't create objects, no reason to think another call to
                 // create will work. Give up.
@@ -705,7 +705,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
                     // killing the eviction thread.
                     boolean evict;
                     try {
-                        evict = evictionPolicy.evict(evictionConfig, underTest,
+                        evict = evictionPolicy.evict(evictionConfig, underTest, // 在判断对象池可以进行回收的时候，直接调用了destroy进行回收
                                 idleObjects.size());
                     } catch (final Throwable t) {
                         // Slightly convoluted as SwallowedExceptionListener
@@ -717,15 +717,15 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
                     }
 
                     if (evict) {
-                        destroy(underTest, DestroyMode.NORMAL);
+                        destroy(underTest, DestroyMode.NORMAL); // 如果可以被回收则直接调用destroy进行回收
                         destroyedByEvictorCount.incrementAndGet();
                     } else {
                         if (testWhileIdle) {
                             boolean active = false;
                             try {
-                                factory.activateObject(underTest);
+                                factory.activateObject(underTest); // 调用activateObject激活该空闲对象，本质上不是为了激活，而是通过这个方法可以判定是否还存活，这一步里面可能会有一些资源的开辟行为
                                 active = true;
-                            } catch (final Exception e) {
+                            } catch (final Exception e) { // 如果激活的时候，发生了异常，就说明该空闲对象已经失联了。调用destroy方法销毁underTest
                                 destroy(underTest, DestroyMode.NORMAL);
                                 destroyedByEvictorCount.incrementAndGet();
                             }
@@ -733,12 +733,12 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
                                 boolean validate = false;
                                 Throwable validationThrowable = null;
                                 try {
-                                    validate = factory.validateObject(underTest);
+                                    validate = factory.validateObject(underTest);  // 再通过进行validateObject校验有效性
                                 } catch (final Throwable t) {
                                     PoolUtils.checkRethrow(t);
                                     validationThrowable = t;
                                 }
-                                if (!validate) {
+                                if (!validate) { // 如果校验失败，说明对象已经不可用了
                                     destroy(underTest, DestroyMode.NORMAL);
                                     destroyedByEvictorCount.incrementAndGet();
                                     if (validationThrowable != null) {
@@ -749,7 +749,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
                                     }
                                 } else {
                                     try {
-                                        factory.passivateObject(underTest);
+                                        factory.passivateObject(underTest); // 因为校验还激活了空闲对象，分配了额外的资源，那么就通过passivateObject把在activateObject中开辟的资源释放掉
                                     } catch (final Exception e) {
                                         destroy(underTest, DestroyMode.NORMAL);
                                         destroyedByEvictorCount.incrementAndGet();
@@ -1023,18 +1023,18 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
             return; // Object was abandoned and removed
         }
 
-        markReturningState(p);
+        markReturningState(p); // 将状态更改为RETURNING
 
         final Duration activeTime = p.getActiveDuration();
 
-        if (getTestOnReturn() && !factory.validateObject(p)) {
+        if (getTestOnReturn() && !factory.validateObject(p)) { // 基于testOnReturn配置调用PooledObjectFactory的validateObject方法以进行可用性检查
             try {
-                destroy(p, DestroyMode.NORMAL);
+                destroy(p, DestroyMode.NORMAL); // 如果检查失败，则调用destroy消耗该对象
             } catch (final Exception e) {
                 swallowException(e);
             }
             try {
-                ensureIdle(1, false);
+                ensureIdle(1, false); // 确保调用idle以确保池中有IDLE状态对象可用，如果没有，则调用create方法创建一个新对象
             } catch (final Exception e) {
                 swallowException(e);
             }
@@ -1043,7 +1043,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
         }
 
         try {
-            factory.passivateObject(p);
+            factory.passivateObject(p); // 进行反初始化操作
         } catch (final Exception e1) {
             swallowException(e1);
             try {
@@ -1060,15 +1060,15 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
             return;
         }
 
-        if (!p.deallocate()) {
+        if (!p.deallocate()) { // 将状态更改为IDLE
             throw new IllegalStateException(
                     "Object has already been returned to this pool or is invalid");
         }
 
         final int maxIdleSave = getMaxIdle();
-        if (isClosed() || maxIdleSave > -1 && maxIdleSave <= idleObjects.size()) {
+        if (isClosed() || maxIdleSave > -1 && maxIdleSave <= idleObjects.size()) { // 检测是否已超过最大空闲对象数，如果超过，则销毁当前对象
             try {
-                destroy(p, DestroyMode.NORMAL);
+                destroy(p, DestroyMode.NORMAL); // 销毁当前对象
             } catch (final Exception e) {
                 swallowException(e);
             }
@@ -1078,7 +1078,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
                 swallowException(e);
             }
         } else {
-            if (getLifo()) {
+            if (getLifo()) { // 根据LIFO（后进先出）配置将对象放置在队列的开头或结尾
                 idleObjects.addFirst(p);
             } else {
                 idleObjects.addLast(p);

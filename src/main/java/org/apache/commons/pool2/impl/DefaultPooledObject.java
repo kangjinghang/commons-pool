@@ -68,7 +68,7 @@ public class DefaultPooledObject<T> implements PooledObject<T> {
      * @return {@code true} if the original state was {@link PooledObjectState#IDLE IDLE}
      */
     @Override
-    public synchronized boolean allocate() {
+    public synchronized boolean allocate() { // 使状态更改为ALLOCATED状态
         if (state == PooledObjectState.IDLE) {
             state = PooledObjectState.ALLOCATED;
             lastBorrowInstant = now();
@@ -110,7 +110,7 @@ public class DefaultPooledObject<T> implements PooledObject<T> {
      *         or {@link PooledObjectState#RETURNING RETURNING}.
      */
     @Override
-    public synchronized boolean deallocate() {
+    public synchronized boolean deallocate() { // 将状态更改为IDLE
         if (state == PooledObjectState.ALLOCATED || state == PooledObjectState.RETURNING) {
             state = PooledObjectState.IDLE;
             lastReturnInstant = now();

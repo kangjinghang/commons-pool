@@ -161,7 +161,7 @@ public abstract class BaseGenericObjectPool<T, E extends Exception> extends Base
 
                 // Evict from the pool
                 try {
-                    evict();
+                    evict(); // 实现逻辑实际在对象池中定义的，也就是由GenericObjectPool或者GenericKeyedObjectPool来实现
                 } catch(final Exception e) {
                     swallowException(e);
                 } catch(final OutOfMemoryError oome) {
@@ -348,8 +348,8 @@ public abstract class BaseGenericObjectPool<T, E extends Exception> extends Base
     private volatile Duration durationBetweenEvictionRuns = BaseObjectPoolConfig.DEFAULT_TIME_BETWEEN_EVICTION_RUNS;
     private volatile int numTestsPerEvictionRun = BaseObjectPoolConfig.DEFAULT_NUM_TESTS_PER_EVICTION_RUN;
 
-    private volatile Duration minEvictableIdleDuration = BaseObjectPoolConfig.DEFAULT_MIN_EVICTABLE_IDLE_DURATION;
-    private volatile Duration softMinEvictableIdleDuration = BaseObjectPoolConfig.DEFAULT_SOFT_MIN_EVICTABLE_IDLE_DURATION;
+    private volatile Duration minEvictableIdleDuration = BaseObjectPoolConfig.DEFAULT_MIN_EVICTABLE_IDLE_DURATION; // 指定空闲对象最大保留时间，超过此时间的会被回收。不配置则不过期回收
+    private volatile Duration softMinEvictableIdleDuration = BaseObjectPoolConfig.DEFAULT_SOFT_MIN_EVICTABLE_IDLE_DURATION; // 用来指定在空闲对象数量超过minIdle设置，且某个空闲对象超过这个空闲时间的才可以会被回收
     private volatile EvictionPolicy<T> evictionPolicy;
     private volatile Duration evictorShutdownTimeoutDuration = BaseObjectPoolConfig.DEFAULT_EVICTOR_SHUTDOWN_TIMEOUT;
     // Internal (primarily state) attributes
@@ -1260,7 +1260,7 @@ public abstract class BaseGenericObjectPool<T, E extends Exception> extends Base
      * Marks the object as returning to the pool.
      * @param pooledObject instance to return to the keyed pool
      */
-    protected void markReturningState(final PooledObject<T> pooledObject) {
+    protected void markReturningState(final PooledObject<T> pooledObject) { // 将状态更改为RETURNING
         synchronized (pooledObject) {
             if (pooledObject.getState() != PooledObjectState.ALLOCATED) {
                 throw new IllegalStateException("Object has already been returned to this pool or is invalid");
@@ -1768,7 +1768,7 @@ public abstract class BaseGenericObjectPool<T, E extends Exception> extends Base
      * @see #getDurationBetweenEvictionRuns()
      * @since 2.10.0
      */
-    public final void setTimeBetweenEvictionRuns(final Duration timeBetweenEvictionRuns) {
+    public final void setTimeBetweenEvictionRuns(final Duration timeBetweenEvictionRuns) { // 设置维护任务执行的时间间隔
         this.durationBetweenEvictionRuns = PoolImplUtils.nonNull(timeBetweenEvictionRuns, BaseObjectPoolConfig.DEFAULT_TIME_BETWEEN_EVICTION_RUNS);
         startEvictor(this.durationBetweenEvictionRuns);
     }
@@ -1801,9 +1801,9 @@ public abstract class BaseGenericObjectPool<T, E extends Exception> extends Base
      *
      * @param delay time in milliseconds before start and between eviction runs
      */
-    final void startEvictor(final Duration delay) {
+    final void startEvictor(final Duration delay) { // 启动回收器来监控回收空闲对象
         synchronized (evictionLock) {
-            final boolean isPositiverDelay = PoolImplUtils.isPositive(delay);
+            final boolean isPositiverDelay = PoolImplUtils.isPositive(delay); // 如果delay<=0则不会开启定时清理任务
             if (evictor == null) { // Starting evictor for the first time or after a cancel
                 if (isPositiverDelay) { // Starting new evictor
                     evictor = new Evictor();

@@ -31,15 +31,15 @@ import java.util.Deque;
  * @param <T> the type of object in the pool
  *
  * @since 2.0
- */
-public interface PooledObject<T> extends Comparable<PooledObject<T>> {
+ */ // 本身是泛型类，并提供了getObject()获取实际对象的方法
+public interface PooledObject<T> extends Comparable<PooledObject<T>> { // 池化对象，是需要放到ObjectPool对象的一个包装类。添加了一些附加的信息，比如说状态信息，创建时间，激活时间等
 
     /**
      * Allocates the object.
      *
      * @return {@code true} if the original state was {@link PooledObjectState#IDLE IDLE}
      */
-    boolean allocate();
+    boolean allocate(); // 使状态更改为ALLOCATED状态
 
     /**
      * Orders instances based on idle time - i.e. the length of time since the
@@ -61,7 +61,7 @@ public interface PooledObject<T> extends Comparable<PooledObject<T>> {
      *
      * @return {@code true} if the state was {@link PooledObjectState#ALLOCATED ALLOCATED}.
      */
-    boolean deallocate();
+    boolean deallocate(); // 将状态更改为IDLE
 
     /**
      * Notifies the object that the eviction test has ended.
@@ -264,7 +264,7 @@ public interface PooledObject<T> extends Comparable<PooledObject<T>> {
      *
      * @return The wrapped object.
      */
-    T getObject();
+    T getObject(); // 获取实际对象的方法
 
     /**
      * Gets the state of this object.

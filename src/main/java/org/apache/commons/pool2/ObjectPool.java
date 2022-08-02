@@ -58,7 +58,7 @@ import java.util.NoSuchElementException;
  *
  * @since 2.0
  */
-public interface ObjectPool<T, E extends Exception> extends Closeable {
+public interface ObjectPool<T, E extends Exception> extends Closeable { // 对象池，负责对对象进行生命周期的管理，并提供了对对象池中活跃对象和空闲对象统计的功能
 
     /**
      * Creates an object using the {@link PooledObjectFactory factory} or other
@@ -73,7 +73,7 @@ public interface ObjectPool<T, E extends Exception> extends Closeable {
      * @throws UnsupportedOperationException
      *              when this pool cannot add new idle objects.
      */
-    void addObject() throws E, IllegalStateException, UnsupportedOperationException;
+    void addObject() throws E, IllegalStateException, UnsupportedOperationException; // 向对象池中增加对象实例
 
     /**
      * Calls {@link ObjectPool#addObject()} {@code count}
@@ -121,7 +121,7 @@ public interface ObjectPool<T, E extends Exception> extends Closeable {
      *              when the pool is exhausted and cannot or will not return
      *              another instance.
      */
-    T borrowObject() throws E, NoSuchElementException, IllegalStateException;
+    T borrowObject() throws E, NoSuchElementException, IllegalStateException; // 从对象池中获取对象
 
     /**
      * Clears any objects sitting idle in the pool, releasing any associated
@@ -180,7 +180,7 @@ public interface ObjectPool<T, E extends Exception> extends Closeable {
      *
      * @throws E if the instance cannot be invalidated
      */
-    void invalidateObject(T obj) throws E;
+    void invalidateObject(T obj) throws E; // 失效非法的对象
 
     /**
      * Invalidates an object from the pool, using the provided
@@ -220,6 +220,6 @@ public interface ObjectPool<T, E extends Exception> extends Closeable {
      *
      * @throws E if an instance cannot be returned to the pool
      */
-    void returnObject(T obj) throws E;
+    void returnObject(T obj) throws E; // 释放对象至对象池
 
 }
