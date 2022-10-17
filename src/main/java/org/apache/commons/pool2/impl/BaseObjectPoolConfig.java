@@ -30,7 +30,7 @@ import org.apache.commons.pool2.BaseObject;
  *
  * @param <T> Type of element pooled.
  * @since 2.0
- */
+ */ //提供一些必要的配置，例如空闲队列是否先进先出、工厂创建对象前是否需要测试、对象从对象池取出时是否测试等基础属性，GenericObjectPoolConfig继承了本类做了默认配置，我们在实际使用中继承它即可，可以结合业务情况扩展对象池配置，例如数据库连接池线程前缀、字符串池长度或名称规则等
 public abstract class BaseObjectPoolConfig<T> extends BaseObject implements Cloneable {
 
     /**

@@ -24,24 +24,24 @@ package org.apache.commons.pool2;
 public enum PooledObjectState {
 
     /**
-     * In the queue, not in use.
+     * In the queue, not in use. 在空闲队列中,还未被使用
      */
     IDLE,
 
     /**
-     * In use.
+     * In use. 使用中
      */
     ALLOCATED,
 
     /**
-     * In the queue, currently being tested for possible eviction.
+     * In the queue, currently being tested for possible eviction.  在空闲队列中，当前正在测试是否满足被驱逐的条件
      */
     EVICTION,
 
     /**
      * Not in the queue, currently being tested for possible eviction. An attempt to borrow the object was made while
      * being tested which removed it from the queue. It should be returned to the head of the queue once eviction
-     * testing completes.
+     * testing completes. 不在空闲队列中，目前正在测试是否可能被驱逐。因为在测试过程中，试图借用对象，并将其从队列中删除。回收测试完成后，它应该被返回到队列的头部。
      * <p>
      * TODO: Consider allocating object and ignoring the result of the eviction test.
      * </p>
@@ -49,35 +49,35 @@ public enum PooledObjectState {
     EVICTION_RETURN_TO_HEAD,
 
     /**
-     * In the queue, currently being validated.
+     * In the queue, currently being validated. 在队列中，正在被校验
      */
     VALIDATION,
 
     /**
      * Not in queue, currently being validated. The object was borrowed while being validated and since testOnBorrow was
      * configured, it was removed from the queue and pre-allocated. It should be allocated once validation completes.
-     */
+     */ // 不在队列中，当前正在验证。该对象在验证时被借用，由于配置了testOnBorrow，所以将其从队列中删除并预先分配。一旦验证完成，就应该分配它。
     VALIDATION_PREALLOCATED,
 
     /**
      * Not in queue, currently being validated. An attempt to borrow the object was made while previously being tested
      * for eviction which removed it from the queue. It should be returned to the head of the queue once validation
-     * completes.
+     * completes. 不在队列中，当前正在验证。在之前测试是否将该对象从队列中移除时，曾尝试借用该对象。一旦验证完成，它应该被返回到队列的头部。
      */
     VALIDATION_RETURN_TO_HEAD,
 
     /**
-     * Failed maintenance (e.g. eviction test or validation) and will be / has been destroyed
+     * Failed maintenance (e.g. eviction test or validation) and will be / has been destroyed 无效状态(如驱逐测试或验证)，并将/已被销毁
      */
     INVALID,
 
     /**
-     * Deemed abandoned, to be invalidated.
+     * Deemed abandoned, to be invalidated. 判定为无效,将会被设置为废弃
      */
     ABANDONED,
 
     /**
-     * Returning to the pool.
+     * Returning to the pool. 正在使用完毕,返回池中
      */
     RETURNING
 }

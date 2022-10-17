@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @since 2.0
  */
-class EvictionTimer {
+class EvictionTimer { // 任务
 
     /**
      * Thread factory that creates a daemon thread, with the context class loader from this class.

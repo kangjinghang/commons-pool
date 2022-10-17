@@ -162,7 +162,7 @@ public interface ObjectPool<T, E extends Exception> extends Closeable { // 对�
      * Returns a negative value if this information is not available.
      * @return the number of instances currently idle in this pool.
      */
-    int getNumIdle();
+    int getNumIdle(); // 池中空闲对象数量
 
     /**
      * Invalidates an object from the pool.

@@ -159,7 +159,7 @@ public abstract class BaseGenericObjectPool<T, E extends Exception> extends Base
                     Thread.currentThread().setContextClassLoader(cl);
                 }
 
-                // Evict from the pool
+                // Evict from the pool 从池中驱逐
                 try {
                     evict(); // 实现逻辑实际在对象池中定义的，也就是由GenericObjectPool或者GenericKeyedObjectPool来实现
                 } catch(final Exception e) {
@@ -171,7 +171,7 @@ public abstract class BaseGenericObjectPool<T, E extends Exception> extends Base
                 }
                 // Re-create idle instances.
                 try {
-                    ensureMinIdle();
+                    ensureMinIdle(); // 保证最小连接数
                 } catch (final Exception e) {
                     swallowException(e);
                 }

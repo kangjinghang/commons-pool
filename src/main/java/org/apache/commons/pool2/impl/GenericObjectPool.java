@@ -299,7 +299,7 @@ public class GenericObjectPool<T, E extends Exception> extends BaseGenericObject
                 }
             }
             if (blockWhenExhausted) {
-                if (p == null) {
+                if (p == null) { // 没有创建成功
                     try { // 2、没有设置最大阻塞等待时间，则无限等待；设置最大等待时间了，则阻塞等待指定的时间
                         p = borrowMaxWaitDuration.isNegative() ? idleObjects.takeFirst() : idleObjects.pollFirst(borrowMaxWaitDuration);
                     } catch (final InterruptedException e) {
